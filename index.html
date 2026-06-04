@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+  <title>SARAH'S HOMESTAY | Invoice with QR Code (UGX)</title>
+  
+  <!-- PWA / iPhone home screen setup -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Sarah's Homestay">
+  <link rel="apple-touch-icon" href="icon.png">
+  
+  <!-- Local QR Code library -->
+  <script src="qrcode.min.js"></script>
+  
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #eef2f5;
+      font-family: system-ui, 'Segoe UI', sans-serif;
+      padding: 0.75rem;
+    }
+
+    .app-container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .dashboard {
+      display: flex;
+      flex-direction: column;
+      gap: 1.2rem;
+    }
+
+    .card {
+      background: white;
+      border-radius: 1.25rem;
+      padding: 1rem;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+      overflow-x: auto;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      align-items: center;
+      border-bottom: 2px solid #e2e8f0;
+      padding-bottom: 0.6rem;
+      margin-bottom: 1rem;
+    }
+
+    .card-header h2 {
+      font-size: 1.3rem;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 0.8rem;
+      margin-bottom: 1.2rem;
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+    }
+
+    .input-group label {
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+
+    .input-group input,
+    .input-group select {
+      padding: 0.6rem;
+      border: 1px solid #cbd5e1;
+      border-radius: 0.9rem;
+      font-size: 0.9rem;
+      background: white;
+    }
+
+    /* Table wrapper for horizontal scroll on small screens */
+    .table-wrapper {
+      overflow-x: auto;
+      margin-bottom: 0.8rem;
+    }
+
+    .services-table {
+      width: 100%;
+      min-width: 500px;
+      border-collapse: collapse;
+    }
+
+    .services-table th,
+    .services-table td {
+      padding: 8px 6px;
+      border-bottom: 1px solid #e2e8f0;
+      text-align: left;
+      vertical-align: middle;
+    }
+
+    .services-table input,
+    .services-table select {
+      width: 100%;
+      padding: 5px;
+      border-radius: 10px;
+      border: 1px solid #cbd5e1;
+      font-size: 0.8rem;
+    }
+
+    .add-btn,
+    .primary-btn,
+    .reset-btn {
+      background: #a4622c;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 2rem;
+      cursor: pointer;
+      font-weight: 500;
+      font-size: 0.85rem;
+      transition: 0.2s;
+    }
+
+    .save-pdf-btn {
+      background: #1e6f3f;
+    }
+
+    .print-btn {
+      background: #2c3e66;
+    }
+
+    .reset-btn {
+      background: #9e2d2f;
+    }
+
+    .action-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.8rem;
+      margin: 1.2rem 0 0;
+    }
+
+    .receipt-preview {
+      background: white;
+      overflow-x: auto;
+    }
+
+    .receipt-paper {
+      max-width: 100%;
+      margin: 0 auto;
+      font-size: 0.8rem;
+      line-height: 1.35;
+      word-wrap: break-word;
+    }
+
+    .receipt-brand-header {
+      text-align: center;
+      border-bottom: 2px solid #ffe0b5;
+      padding-bottom: 0.5rem;
+      margin-bottom: 0.6rem;
+    }
+
+    .receipt-company {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: #a4622c;
+    }
+
+    .receipt-tagline {
+      font-size: 0.65rem;
+      font-weight: 500;
+      color: #b87c4a;
+    }
+
+    .receipt-contact-bar {
+      background: #fef3e8;
+      padding: 4px 6px;
+      border-radius: 40px;
+      display: inline-flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      justify-content: center;
+      font-size: 0.6rem;
+      margin-top: 4px;
+    }
+
+    .client-block {
+      background: #f9fafb;
+      padding: 0.5rem;
+      border-radius: 0.8rem;
+      margin: 0.5rem 0;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 6px;
+      font-size: 0.75rem;
+    }
+
+    .receipt-items-table {
+      width: 100%;
+      margin: 0.5rem 0;
+      border-collapse: collapse;
+      font-size: 0.7rem;
+    }
+
+    .receipt-items-table th,
+    .receipt-items-table td {
+      border-bottom: 1px solid #e2e8f0;
+      padding: 5px 3px;
+      text-align: left;
+    }
+
+    .terms-section,
+    .payment-details,
+    .mobile-money-section {
+      background: #fefaf5;
+      padding: 0.5rem;
+      border-radius: 0.7rem;
+      margin: 0.5rem 0;
+      font-size: 0.65rem;
+      border-left: 3px solid #b87c4a;
+    }
+
+    .total-display {
+      text-align: right;
+      margin-top: 0.6rem;
+      font-weight: 800;
+      background: #fef3e8;
+      padding: 0.5rem;
+      border-radius: 0.8rem;
+      font-size: 0.8rem;
+    }
+
+    .balance-due-block {
+      background: #f1f5f9;
+      padding: 0.5rem;
+      border-radius: 0.8rem;
+      margin: 0.5rem 0;
+      text-align: right;
+      font-weight: 700;
+      font-size: 0.85rem;
+    }
+
+    .qr-container {
+      display: flex;
+      justify-content: center;
+      margin: 0.6rem 0;
+    }
+
+    .qr-code-img {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: white;
+      padding: 5px;
+      border: 1px solid #ddd;
+      width: 110px;
+      height: 110px;
+    }
+
+    .qr-code-img img,
+    .qr-code-img canvas,
+    .qr-code-img svg {
+      max-width: 100%;
+      max-height: 100%;
+    }
+
+    .footer-single {
+      text-align: center;
+      font-size: 0.6rem;
+      margin-top: 0.5rem;
+      color: #a4622c;
+      font-weight: bold;
+    }
+
+    .timestamp-footer {
+      text-align: center;
+      font-size: 0.55rem;
+      color: #6c757d;
+      margin-top: 0.5rem;
+      border-top: 1px dashed #ccc;
+      padding-top: 0.3rem;
+    }
+
+    /* Print styles */
+    @media print {
+      body {
+        margin: 0;
+        padding: 0;
+        background: white;
+      }
+      .card.receipt-preview {
+        padding: 0;
+        margin: 0;
+        box-shadow: none;
+        background: white;
+        display: block;
+        overflow: visible;
+      }
+      .receipt-paper {
+        max-width: 100%;
+        padding: 0;
+        margin: 0;
+      }
+      .action-buttons,
+      .card:not(.receipt-preview) {
+        display: none !important;
+      }
+      .receipt-brand-header {
+        margin-bottom: 0.3rem;
+      }
+      .client-block {
+        margin: 0.3rem 0;
+      }
+      .receipt-items-table {
+        font-size: 0.65rem;
+      }
+      .terms-section,
+      .payment-details,
+      .mobile-money-section {
+        margin: 0.3rem 0;
+      }
+      .balance-due-block {
+        margin: 0.3rem 0;
+      }
+      .qr-container {
+        margin: 0.3rem 0;
+      }
+      .timestamp-footer {
+        margin-top: 0.3rem;
+      }
+      @page {
+        size: A4;
+        margin: 10mm;
+      }
+    }
+
+    /* Small screen adjustments */
+    @media (max-width: 560px) {
+      body {
+        padding: 0.5rem;
+      }
+      .card {
+        padding: 0.8rem;
+      }
+      .action-buttons button {
+        flex: 1 1 auto;
+        min-width: 100px;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="app-container">
+  <div class="dashboard">
+    <!-- Input Form Card -->
+    <div class="card">
+      <div class="card-header">
+        <h2>🧾 SARAH'S HOMESTAY · Invoice</h2>
+        <span class="badge" style="font-size:0.7rem;">UGX | QR Code</span>
+      </div>
+      <div class="form-grid">
+        <div class="input-group"><label>📅 Invoice Date</label><input type="date" id="receiptDate"></div>
+        <div class="input-group"><label>👤 Client Name</label><input type="text" id="clientName" placeholder="Full name" value="KUBIRU ETIZO"></div>
+        <div class="input-group"><label>📞 Client Contact</label><input type="text" id="clientContact" placeholder="Phone / Email" value="0781889282"></div>
+        <div class="input-group"><label>📍 Facility Location</label><input type="text" id="facilityLocation" placeholder="e.g., Ababira" value="ABABIRA"></div>
+      </div>
+      <div class="services-section">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.6rem; margin-bottom: 0.8rem;">
+          <span>🛎️ Services (UGX)</span>
+          <button type="button" id="addServiceBtn" class="add-btn" style="background:#a4622c;">+ Add service</button>
+        </div>
+        <div class="table-wrapper">
+          <table class="services-table" id="servicesTable">
+            <thead>
+              <tr><th>Description</th><th>Duration</th><th>Unit</th><th>Rate (UGX)</th><th>Amount (UGX)</th><th></th></tr>
+            </thead>
+            <tbody id="servicesTbody"></tbody>
+           </table>
+        </div>
+        <div class="total-display" id="totalAmountDisplay">💰 Total Invoice: UGX 450,000</div>
+      </div>
+      <div class="input-group" style="margin-top: 0.5rem; max-width: 280px;">
+        <label>💵 Amount Paid (UGX)</label>
+        <input type="number" id="amountPaid" value="100000" step="1000">
+      </div>
+      <div class="action-buttons">
+        <button id="refreshPreviewBtn" class="primary-btn">🔄 Refresh</button>
+        <button id="newInvoiceBtn" class="reset-btn">🆕 New Invoice</button>
+        <button id="savePdfBtn" class="primary-btn save-pdf-btn">📄 Save PDF</button>
+        <button id="printBtn" class="primary-btn print-btn">🖨️ Print</button>
+      </div>
+    </div>
+    <!-- Receipt Preview Card -->
+    <div class="card receipt-preview">
+      <div id="receiptContainer" class="receipt-paper"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ======================== BUSINESS DATA ========================
+  const BUSINESS = {
+    name: "SARAH'S HOMESTAY",
+    tagline: "FOR FULLY FURNISHED APARTMENTS",
+    phone: "+256 752 321177",
+    email: "sarahzhomestay@gmail.com",
+    address: "Mpala, Entebbe Road"
+  };
+
+  const BANK_DETAILS = {
+    accountNumber: "7202502003",
+    accountName: "Nakibuule Sarah",
+    bank: "Eco bank",
+    country: "Uganda"
+  };
+
+  const AIRTEL_MONEY = {
+    title: "Airtel Money Pay",
+    merchantCode: "6633236",
+    accountName: "Sarah Homestay",
+    country: "Uganda"
+  };
+
+  const TERMS = [
+    "Check in from 12:00pm",
+    "Check out 11:00pm",
+    "No smoking inside the rooms",
+    "No parties allowed",
+    "Switch off all electronics and gas before leaving the facility"
+  ];
+
+  // ======================== SERVICES DATA ========================
+  let services = [
+    { description: "Accommodation", duration: 3, unit: "nights", rate: 150000, amount: 450000 }
+  ];
+
+  // ======================== INVOICE NUMBER & COUNTER ========================
+  let invoiceCounter = parseInt(localStorage.getItem('invoiceCounter') || '1');
+  function generateInvoiceNumber() {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2,'0');
+    const dd = String(today.getDate()).padStart(2,'0');
+    const counterStr = String(invoiceCounter).padStart(4,'0');
+    return `INV-${yyyy}${mm}${dd}-${counterStr}`;
+  }
+  let currentInvoiceNumber = generateInvoiceNumber();
+
+  function getCurrentTimestamp() {
+    const now = new Date();
+    return now.toLocaleString('en-GB', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit', second:'2-digit' });
+  }
+
+  // ======================== SERVICE HELPERS ========================
+  function recalcAmount(idx) {
+    let s = services[idx];
+    s.amount = (s.duration || 0) * (s.rate || 0);
+    return s.amount;
+  }
+
+  function updateTotal() {
+    let total = services.reduce((sum, s) => sum + (s.amount || 0), 0);
+    document.getElementById('totalAmountDisplay').innerHTML = `💰 Total Invoice: UGX ${total.toLocaleString()}`;
+    return total;
+  }
+
+  function renderServicesTable() {
+    const tbody = document.getElementById('servicesTbody');
+    tbody.innerHTML = '';
+    services.forEach((s, idx) => {
+      const row = tbody.insertRow();
+
+      let td0 = row.insertCell(0);
+      let inpDesc = document.createElement('input');
+      inpDesc.value = s.description;
+      inpDesc.oninput = e => { services[idx].description = e.target.value; updatePreview(); };
+      td0.appendChild(inpDesc);
+
+      let td1 = row.insertCell(1);
+      let inpDur = document.createElement('input');
+      inpDur.type = 'number';
+      inpDur.step = 0.5;
+      inpDur.value = s.duration;
+      inpDur.oninput = e => {
+        services[idx].duration = parseFloat(e.target.value) || 0;
+        recalcAmount(idx);
+        amountSpan.innerText = services[idx].amount.toLocaleString();
+        updateTotal();
+        updatePreview();
+      };
+      td1.appendChild(inpDur);
+
+      let tdUnit = row.insertCell(2);
+      let unitSelect = document.createElement('select');
+      let optDays = document.createElement('option'); optDays.value = 'days'; optDays.text = 'Days';
+      let optNights = document.createElement('option'); optNights.value = 'nights'; optNights.text = 'Nights';
+      if (s.unit === 'days') optDays.selected = true;
+      else optNights.selected = true;
+      unitSelect.appendChild(optDays);
+      unitSelect.appendChild(optNights);
+      unitSelect.onchange = e => { services[idx].unit = e.target.value; updatePreview(); };
+      tdUnit.appendChild(unitSelect);
+
+      let tdRate = row.insertCell(3);
+      let inpRate = document.createElement('input');
+      inpRate.type = 'number';
+      inpRate.step = 1000;
+      inpRate.value = s.rate;
+      inpRate.oninput = e => {
+        services[idx].rate = parseFloat(e.target.value) || 0;
+        recalcAmount(idx);
+        amountSpan.innerText = services[idx].amount.toLocaleString();
+        updateTotal();
+        updatePreview();
+      };
+      tdRate.appendChild(inpRate);
+
+      let tdAmount = row.insertCell(4);
+      let amountSpan = document.createElement('span');
+      amountSpan.innerText = s.amount.toLocaleString();
+      tdAmount.appendChild(amountSpan);
+
+      let tdDel = row.insertCell(5);
+      let delBtn = document.createElement('button');
+      delBtn.innerText = '✖';
+      delBtn.style.background = 'none';
+      delBtn.style.border = 'none';
+      delBtn.style.fontSize = '1.2rem';
+      delBtn.style.cursor = 'pointer';
+      delBtn.onclick = () => {
+        services.splice(idx, 1);
+        renderServicesTable();
+        updateTotal();
+        updatePreview();
+      };
+      tdDel.appendChild(delBtn);
+    });
+    updateTotal();
+  }
+
+  renderServicesTable();
+  document.getElementById('addServiceBtn').onclick = () => {
+    services.push({ description: "New service", duration: 1, unit: "days", rate: 50000, amount: 50000 });
+    renderServicesTable();
+    updatePreview();
+  };
+
+  const amountPaidInput = document.getElementById('amountPaid');
+  const clientNameInput = document.getElementById('clientName');
+  const clientContactInput = document.getElementById('clientContact');
+  const facilityInput = document.getElementById('facilityLocation');
+  const receiptDateInput = document.getElementById('receiptDate');
+
+  // Set default date to today
+  const today = new Date().toISOString().slice(0,10);
+  receiptDateInput.value = today;
+
+  function updatePreview() {
+    const container = document.getElementById('receiptContainer');
+    if (container) {
+      container.innerHTML = generateInvoiceHTML();
+      generateQRCodeInInvoice();
+    }
+  }
+
+  amountPaidInput.addEventListener('input', updatePreview);
+  clientNameInput.addEventListener('input', updatePreview);
+  clientContactInput.addEventListener('input', updatePreview);
+  facilityInput.addEventListener('input', updatePreview);
+  receiptDateInput.addEventListener('input', updatePreview);
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m]));
+  }
+
+  function generateInvoiceHTML() {
+    const date = receiptDateInput.value;
+    const client = clientNameInput.value.trim() || "KUBIRU ETIZO";
+    const contact = clientContactInput.value.trim() || "0781889282";
+    const facility = facilityInput.value.trim() || "ABABIRA";
+    const total = services.reduce((sum, s) => sum + (s.amount || 0), 0);
+    let amountPaid = parseFloat(amountPaidInput.value);
+    if (isNaN(amountPaid)) amountPaid = 0;
+    const balanceDue = Math.max(0, total - amountPaid);
+    const timestamp = getCurrentTimestamp();
+    const invoiceNumber = currentInvoiceNumber;
+
+    let itemsHtml = '';
+    for (let s of services) {
+      itemsHtml += `
+        <tr>
+          <td style="padding:4px 4px">${escapeHtml(s.description)}</td>
+          <td style="padding:4px 4px">${s.duration}</td>
+          <td style="padding:4px 4px">${s.unit}</td>
+          <td style="padding:4px 4px">UGX ${s.rate.toLocaleString()}</td>
+          <td style="padding:4px 4px; text-align:right">UGX ${s.amount.toLocaleString()}</td>
+        </tr>
+      `;
+    }
+    if (services.length === 0) itemsHtml = '<tr><td colspan="5">No services</td></tr>';
+
+    return `
+      <div>
+        <div class="receipt-brand-header">
+          <div class="receipt-company">SARAH'S HOMESTAY</div>
+          <div class="receipt-tagline">FOR FULLY FURNISHED APARTMENTS</div>
+          <div class="receipt-contact-bar">
+            📞 ${BUSINESS.phone} &nbsp;|&nbsp; ✉️ ${BUSINESS.email} &nbsp;|&nbsp; 📍 ${BUSINESS.address}
+          </div>
+        </div>
+        <div class="client-block">
+          <div><strong>Invoice Date:</strong> ${escapeHtml(date)}</div>
+          <div><strong>Invoice Number:</strong> ${invoiceNumber}</div>
+          <div><strong>Client:</strong> ${escapeHtml(client)}</div>
+          <div><strong>Contact:</strong> ${escapeHtml(contact)}</div>
+          <div><strong>📍 Facility Location:</strong> ${escapeHtml(facility)}</div>
+        </div>
+        <table class="receipt-items-table">
+          <thead>
+            <tr><th>Service</th><th>Duration</th><th>Unit</th><th>Rate (UGX)</th><th style="text-align:right">Amount (UGX)</th></tr>
+          </thead>
+          <tbody>${itemsHtml}</tbody>
+        </table>
+        <div style="text-align:right; font-weight:800; margin:8px 0; padding:6px; background:#fef3e8; border-radius:10px;">
+          Total Invoice: UGX ${total.toLocaleString()}
+        </div>
+        <div style="text-align:right; margin:4px 0;"><span>💵 Amount Paid: UGX ${amountPaid.toLocaleString()}</span></div>
+        <div class="balance-due-block"><strong>⚖️ Balance due:</strong> UGX ${balanceDue.toLocaleString()}</div>
+        <div class="terms-section">
+          <strong>📜 Terms & Conditions</strong><br>
+          • ${TERMS[0]}<br>
+          • ${TERMS[1]}<br>
+          • ${TERMS[2]}<br>
+          • ${TERMS[3]}<br>
+          • ${TERMS[4]}
+        </div>
+        <div class="payment-details">
+          <strong>🏦 Payment Options</strong><br>
+          • Bank Transfer<br>
+          • Account Number: ${BANK_DETAILS.accountNumber}<br>
+          • Account Name: ${BANK_DETAILS.accountName}<br>
+          • Bank: ${BANK_DETAILS.bank}<br>
+          • Country: ${BANK_DETAILS.country}
+        </div>
+        <div class="mobile-money-section">
+          <strong>📱 ${AIRTEL_MONEY.title}</strong><br>
+          Merchant code: ${AIRTEL_MONEY.merchantCode}<br>
+          Account Name: ${AIRTEL_MONEY.accountName}<br>
+          Country: ${AIRTEL_MONEY.country}
+        </div>
+        <hr>
+        <div class="qr-container">
+          <div id="invoiceQrDiv" class="qr-code-img"></div>
+        </div>
+        <div style="margin-top:0.5rem; font-size:0.7rem; text-align:center;"><strong>Authorized by: Management</strong></div>
+        <div style="font-size:0.6rem; text-align:center; margin-top:0.5rem;">Thank you for choosing SARAH'S HOMESTAY</div>
+        <div class="footer-single">SARAH'S HOMESTAY</div>
+        <div class="timestamp-footer">🕒 Printed/Downloaded on: ${timestamp}</div>
+      </div>
+    `;
+  }
+
+  function generateQRCodeInInvoice() {
+    const qrDiv = document.getElementById('invoiceQrDiv');
+    if (!qrDiv) return;
+    qrDiv.innerHTML = '';
+
+    const date = receiptDateInput.value;
+    const client = clientNameInput.value.trim() || "KUBIRU ETIZO";
+    const contact = clientContactInput.value.trim() || "0781889282";
+    const facility = facilityInput.value.trim() || "ABABIRA";
+    const total = services.reduce((sum, s) => sum + (s.amount || 0), 0);
+    let amountPaid = parseFloat(amountPaidInput.value);
+    if (isNaN(amountPaid)) amountPaid = 0;
+    const balanceDue = Math.max(0, total - amountPaid);
+    const invoiceNumber = currentInvoiceNumber;
+
+    const qrText = `Invoice #: ${invoiceNumber}\nDate: ${date}\nClient: ${client}\nContact: ${contact}\nFacility: ${facility}\nTotal: UGX ${total.toLocaleString()}\nAmount Paid: UGX ${amountPaid.toLocaleString()}\nBalance: UGX ${balanceDue.toLocaleString()}\nThank you - SARAH'S HOMESTAY`;
+
+    try {
+      new QRCode(qrDiv, {
+        text: qrText,
+        width: 100,
+        height: 100,
+        colorDark: "#000000",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.H
+      });
+    } catch (err) {
+      console.error("QR error:", err);
+      qrDiv.innerHTML = "<span style='font-size:10px;color:red;'>QR error</span>";
+    }
+  }
+
+  function safePrint() {
+    updatePreview();
+    setTimeout(() => window.print(), 100);
+  }
+
+  function resetInvoice() {
+    clientNameInput.value = "KUBIRU ETIZO";
+    clientContactInput.value = "0781889282";
+    facilityInput.value = "ABABIRA";
+    receiptDateInput.value = new Date().toISOString().slice(0,10);
+    amountPaidInput.value = "100000";
+    services = [
+      { description: "Accommodation", duration: 3, unit: "nights", rate: 150000, amount: 450000 }
+    ];
+    renderServicesTable();
+    invoiceCounter++;
+    localStorage.setItem('invoiceCounter', invoiceCounter);
+    currentInvoiceNumber = generateInvoiceNumber();
+    updatePreview();
+  }
+
+  document.getElementById('refreshPreviewBtn').onclick = updatePreview;
+  document.getElementById('newInvoiceBtn').onclick = resetInvoice;
+  document.getElementById('printBtn').onclick = safePrint;
+  document.getElementById('savePdfBtn').onclick = () => {
+    updatePreview();
+    setTimeout(() => window.print(), 100);
+  };
+
+  window.onload = () => {
+    updatePreview();
+  };
+
+  // Service worker registration for offline capability
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(err => console.log("SW registration failed:", err));
+  }
+</script>
+</body>
+</html>
