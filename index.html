@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
-  <title>SARAH'S HOMESTAY · Invoice with QR</title>
-  <link rel="manifest" href="manifest.json">
+  <title>SARAH'S HOMESTAY · Smart Invoice with QR</title>
+  <!-- PWA & Icons will be dynamically generated for perfect installability -->
+  <meta name="theme-color" content="#a4622c">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Sarah's Homestay">
-  <link rel="apple-touch-icon" href="icon-192.png">
-  <meta name="theme-color" content="#a4622c">
+  <!-- External libraries -->
   <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <style>
@@ -19,26 +19,22 @@
       box-sizing: border-box;
       -webkit-tap-highlight-color: transparent;
     }
-
     body {
       background: #eef2f5;
       font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, sans-serif;
       padding: 1rem;
       overflow-x: hidden;
     }
-
     .app-container {
       width: 100%;
       max-width: 1400px;
       margin: 0 auto;
     }
-
     .dashboard {
       display: flex;
       flex-direction: column;
       gap: 1.5rem;
     }
-
     .card {
       background: white;
       border-radius: 1.5rem;
@@ -46,7 +42,6 @@
       box-shadow: 0 8px 20px rgba(0,0,0,0.05);
       overflow-x: auto;
     }
-
     .card-header {
       display: flex;
       justify-content: space-between;
@@ -59,14 +54,12 @@
       font-size: 1.35rem;
       word-break: break-word;
     }
-
     .form-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
       gap: 1rem;
       margin-bottom: 1.5rem;
     }
-
     .input-group {
       display: flex;
       flex-direction: column;
@@ -84,7 +77,6 @@
       background: white;
       width: 100%;
     }
-
     .table-wrapper {
       width: 100%;
       overflow-x: auto;
@@ -110,7 +102,6 @@
       border: 1px solid #cbd5e1;
       font-size: 0.85rem;
     }
-
     .add-btn, .primary-btn, .reset-btn {
       background: #a4622c;
       color: white;
@@ -131,7 +122,6 @@
       gap: 0.8rem;
       margin-top: 1.2rem;
     }
-
     .receipt-preview {
       background: white;
       overflow-x: auto;
@@ -254,7 +244,6 @@
       border-top: 1px dashed #ccc;
       padding-top: 0.4rem;
     }
-
     @media (max-width: 640px) {
       body { padding: 0.75rem; }
       .card { padding: 1rem; }
@@ -262,12 +251,6 @@
       .client-block { grid-template-columns: 1fr; }
       canvas.qr-code { width: 110px; height: 110px; }
     }
-    @media (orientation: landscape) and (max-height: 500px) {
-      body { padding: 0.5rem; }
-      .dashboard { gap: 0.8rem; }
-      .card { padding: 0.8rem; }
-    }
-
     @media print {
       body { margin: 0; padding: 0; background: white; }
       .card.receipt-preview { padding: 0; margin: 0; box-shadow: none; background: white; display: block; }
@@ -284,7 +267,7 @@
     <!-- Input Card -->
     <div class="card">
       <div class="card-header">
-        <h2>🧾 SARAH'S HOMESTAY · Invoice with QR</h2>
+        <h2>🧾 SARAH'S HOMESTAY · Pro Invoice + QR</h2>
       </div>
       <div class="form-grid">
         <div class="input-group"><label>📅 Invoice Date</label><input type="date" id="receiptDate"></div>
@@ -324,7 +307,96 @@
 </div>
 
 <script>
-  // BUSINESS DATA
+  // ----------------------------------------------
+  //  DYNAMIC PWA ICONS & MANIFEST (Fully Installable)
+  //  Creates 192x192 + 512x512 canvas icons and injects manifest blob
+  // ----------------------------------------------
+  (function setupPWA() {
+    async function generateIcon(size, bgColor = '#a4622c', textColor = '#ffffff', label = 'SH') {
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = bgColor;
+      ctx.fillRect(0, 0, size, size);
+      ctx.fillStyle = textColor;
+      ctx.font = `bold ${size * 0.4}px system-ui, -apple-system, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(label, size/2, size/2);
+      // add tiny decoration
+      ctx.font = `${size * 0.12}px system-ui`;
+      ctx.fillStyle = '#ffe0b5';
+      ctx.fillText('✦', size - 12, size - 10);
+      return canvas;
+    }
+
+    async function getIconBlob(size, label = 'SH') {
+      const canvas = await generateIcon(size, '#a4622c', '#ffffff', label);
+      return new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+    }
+
+    (async () => {
+      try {
+        const icon192Blob = await getIconBlob(192, 'SH');
+        const icon512Blob = await getIconBlob(512, 'SH');
+        const icon192Url = URL.createObjectURL(icon192Blob);
+        const icon512Url = URL.createObjectURL(icon512Blob);
+        
+        // Create dynamic manifest with correct icons
+        const manifestObj = {
+          name: "Sarah's Homestay Invoice",
+          short_name: "SarahsInvoice",
+          description: "Professional invoice management for homestay",
+          start_url: ".",
+          display: "standalone",
+          theme_color: "#a4622c",
+          background_color: "#eef2f5",
+          icons: [
+            { src: icon192Url, sizes: "192x192", type: "image/png", purpose: "any maskable" },
+            { src: icon512Url, sizes: "512x512", type: "image/png", purpose: "any maskable" }
+          ]
+        };
+        const manifestBlob = new Blob([JSON.stringify(manifestObj)], { type: 'application/json' });
+        const manifestUrl = URL.createObjectURL(manifestBlob);
+        
+        // Remove existing manifest link if any, add new
+        const oldLink = document.querySelector('link[rel="manifest"]');
+        if(oldLink) oldLink.remove();
+        const manifestLink = document.createElement('link');
+        manifestLink.rel = 'manifest';
+        manifestLink.href = manifestUrl;
+        document.head.appendChild(manifestLink);
+        
+        // Apple touch icon
+        let appleIcon = document.querySelector('link[rel="apple-touch-icon"]');
+        if(!appleIcon) {
+          appleIcon = document.createElement('link');
+          appleIcon.rel = 'apple-touch-icon';
+          document.head.appendChild(appleIcon);
+        }
+        appleIcon.href = icon192Url;
+        
+        // Standard favicon (32x32)
+        const faviconCanvas = await generateIcon(64, '#a4622c', '#ffffff', 'SH');
+        faviconCanvas.toBlob(blob => {
+          const favUrl = URL.createObjectURL(blob);
+          let favLink = document.querySelector('link[rel="icon"]');
+          if(!favLink) {
+            favLink = document.createElement('link');
+            favLink.rel = 'icon';
+            favLink.type = 'image/png';
+            document.head.appendChild(favLink);
+          }
+          favLink.href = favUrl;
+        }, 'image/png');
+        
+        console.log('✅ PWA icons & manifest injected dynamically');
+      } catch(e) { console.warn("Icon generation fallback", e); }
+    })();
+  })();
+
+  // ----------------- BUSINESS DATA -----------------
   const BUSINESS = {
     name: "SARAH'S HOMESTAY",
     tagline: "FOR FULLY FURNISHED APARTMENTS",
@@ -352,7 +424,7 @@
     "Switch off all electronics and gas before leaving the facility"
   ];
 
-  // Daily invoice counter
+  // Daily invoice counter (persistent per day)
   function getTodayDateStr() {
     const now = new Date();
     const yyyy = now.getFullYear();
@@ -392,7 +464,7 @@
     return new Date().toLocaleString('en-GB', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit', second:'2-digit' });
   }
 
-  // Services array
+  // Services data
   let services = [
     { description: "Accommodation", duration: 3, unit: "nights", rate: 150000, amount: 450000 }
   ];
@@ -456,15 +528,16 @@
 
       let tdDel = row.insertCell(5);
       let delBtn = document.createElement('button');
-      delBtn.innerText = '✖'; delBtn.style.cssText = 'background:none; border:none; font-size:1.2rem; cursor:pointer;';
+      delBtn.innerText = '✖'; delBtn.style.cssText = 'background:none; border:none; font-size:1.2rem; cursor:pointer; color:#9e2d2f;';
       delBtn.onclick = () => { services.splice(idx,1); renderServicesTable(); updateTotal(); updatePreview(); };
       tdDel.appendChild(delBtn);
     });
     updateTotal();
   }
+
   renderServicesTable();
   document.getElementById('addServiceBtn').onclick = () => {
-    services.push({ description: "New service", duration: 1, unit: "days", rate: 50000, amount: 50000 });
+    services.push({ description: "Extra service", duration: 1, unit: "days", rate: 50000, amount: 50000 });
     renderServicesTable();
     updatePreview();
   };
@@ -476,21 +549,12 @@
   const receiptDateInput = document.getElementById('receiptDate');
   receiptDateInput.value = new Date().toISOString().slice(0,10);
 
-  function updatePreview() {
-    const container = document.getElementById('receiptContainer');
-    if (container) {
-      container.innerHTML = generateInvoiceHTML();
-      generateQRCodeInInvoice();
-    }
-  }
-  [amountPaidInput, clientNameInput, clientContactInput, facilityInput, receiptDateInput].forEach(el => el.addEventListener('input', updatePreview));
-
   function escapeHtml(str) {
     if (!str) return '';
     return str.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]));
   }
 
-  // Generate the full invoice HTML including QR container (canvas added after generation)
+  // Generate Invoice HTML (pure)
   function generateInvoiceHTML() {
     const date = receiptDateInput.value;
     const client = clientNameInput.value.trim() || "KUBIRU ETIZO";
@@ -546,12 +610,12 @@
       </div>`;
   }
 
-  // Generate QR code with all invoice details
+  // QR code generation from invoice summary
   async function generateQRCodeInInvoice() {
     const canvas = document.getElementById('invoiceQrCanvas');
     if (!canvas) return;
     if (typeof QRCode === 'undefined') {
-      console.warn("QRCode library not loaded");
+      console.warn("QRCode lib missing");
       const ctx = canvas.getContext('2d');
       ctx.fillStyle = '#f0f0f0'; ctx.fillRect(0,0,130,130);
       ctx.fillStyle = '#a00'; ctx.font = '10px sans-serif'; ctx.fillText('QR lib missing', 20, 65);
@@ -575,6 +639,17 @@
     }
   }
 
+  async function updatePreview() {
+    const container = document.getElementById('receiptContainer');
+    if (container) {
+      container.innerHTML = generateInvoiceHTML();
+      await generateQRCodeInInvoice();
+    }
+  }
+
+  // Event listeners for realtime update
+  [amountPaidInput, clientNameInput, clientContactInput, facilityInput, receiptDateInput].forEach(el => el.addEventListener('input', updatePreview));
+
   async function exportAsPDF() {
     const element = document.getElementById('receiptContainer');
     const filename = `invoice_${currentInvoiceNumber}.pdf`;
@@ -588,7 +663,7 @@
   }
 
   document.getElementById('refreshPreviewBtn').onclick = updatePreview;
-  document.getElementById('printBtn').onclick = () => { updatePreview(); setTimeout(() => window.print(), 100); };
+  document.getElementById('printBtn').onclick = () => { updatePreview(); setTimeout(() => window.print(), 200); };
   document.getElementById('savePdfBtn').onclick = exportAsPDF;
   document.getElementById('newInvoiceBtn').onclick = () => {
     clientNameInput.value = "KUBIRU ETIZO";
@@ -601,7 +676,16 @@
     currentInvoiceNumber = refreshInvoiceNumber();
     updatePreview();
   };
-  window.onload = updatePreview;
+  window.onload = () => { updatePreview(); };
+  
+  // Register Service Worker (offline support)
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js').then(reg => {
+        console.log('Service Worker registered', reg);
+      }).catch(err => console.warn('SW reg error:', err));
+    });
+  }
 </script>
 </body>
 </html>
