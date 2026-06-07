@@ -1,7 +1,7 @@
 {
   "name": "Sarah's Homestay Invoice",
   "short_name": "SarahsInvoice",
-  "description": "Invoice management for Sarah's Homestay",
+  "description": "Professional invoice management for homestay with stay dates and QR codes",
   "start_url": ".",
   "display": "standalone",
   "theme_color": "#a4622c",
@@ -10,12 +10,14 @@
     {
       "src": "icon-192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
       "src": "icon-512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }
