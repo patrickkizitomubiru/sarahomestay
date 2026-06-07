@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
-  <title>SARAH'S HOMESTAY · Smart Invoice with QR</title>
+  <title>SARAH'S HOMESTAY · Smart Invoice with QR & Stay Dates</title>
   <!-- PWA & Icons will be dynamically generated for perfect installability -->
   <meta name="theme-color" content="#a4622c">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -162,6 +162,19 @@
       gap: 8px;
       font-size: 0.8rem;
     }
+    .stay-dates-block {
+      background: #fef7e0;
+      padding: 0.5rem 0.6rem;
+      border-radius: 1rem;
+      margin: 0.4rem 0;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.8rem;
+      font-weight: 500;
+      border-left: 4px solid #a4622c;
+    }
     .receipt-items-table {
       width: 100%;
       border-collapse: collapse;
@@ -191,8 +204,9 @@
       border-left: 3px solid #b87c4a;
       word-break: break-word;
     }
+    /* CENTERING FIXES */
     .total-display {
-      text-align: right;
+      text-align: center;
       margin-top: 0.6rem;
       font-weight: 800;
       background: #fef3e8;
@@ -201,12 +215,20 @@
       font-size: 0.85rem;
       word-break: break-word;
     }
+    .amount-paid-line {
+      text-align: center;
+      margin: 0.4rem 0;
+      font-weight: 500;
+      background: #f9f5f0;
+      padding: 0.4rem;
+      border-radius: 0.8rem;
+    }
     .balance-due-block {
       background: #f1f5f9;
       padding: 0.6rem;
       border-radius: 0.8rem;
       margin: 0.6rem 0;
-      text-align: right;
+      text-align: center;
       font-weight: 700;
       font-size: 0.9rem;
     }
@@ -249,6 +271,7 @@
       .card { padding: 1rem; }
       .receipt-company { font-size: 1.3rem; }
       .client-block { grid-template-columns: 1fr; }
+      .stay-dates-block { flex-direction: column; align-items: flex-start; gap: 6px; }
       canvas.qr-code { width: 110px; height: 110px; }
     }
     @media print {
@@ -267,13 +290,15 @@
     <!-- Input Card -->
     <div class="card">
       <div class="card-header">
-        <h2>🧾 SARAH'S HOMESTAY · Pro Invoice + QR</h2>
+        <h2>🧾 SARAH'S HOMESTAY · Pro Invoice + Stay Dates + QR</h2>
       </div>
       <div class="form-grid">
         <div class="input-group"><label>📅 Invoice Date</label><input type="date" id="receiptDate"></div>
         <div class="input-group"><label>👤 Client Name</label><input type="text" id="clientName" placeholder="Full name" value="KUBIRU ETIZO"></div>
         <div class="input-group"><label>📞 Client Contact</label><input type="text" id="clientContact" placeholder="Phone / Email" value="0781889282"></div>
         <div class="input-group"><label>📍 Facility Location</label><input type="text" id="facilityLocation" placeholder="e.g., Ababira" value="ABABIRA"></div>
+        <div class="input-group"><label>🏡 Check-in Date</label><input type="date" id="checkInDate"></div>
+        <div class="input-group"><label>🚪 Check-out Date</label><input type="date" id="checkOutDate"></div>
       </div>
       <div class="services-section">
         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem;">
@@ -299,7 +324,7 @@
         <button id="printBtn" class="primary-btn print-btn">🖨️ Print</button>
       </div>
     </div>
-    <!-- Receipt Preview with QR -->
+    <!-- Receipt Preview with QR & Stay Dates -->
     <div class="card receipt-preview">
       <div id="receiptContainer" class="receipt-paper"></div>
     </div>
@@ -308,8 +333,7 @@
 
 <script>
   // ----------------------------------------------
-  //  DYNAMIC PWA ICONS & MANIFEST (Fully Installable)
-  //  Creates 192x192 + 512x512 canvas icons and injects manifest blob
+  // DYNAMIC PWA ICONS & MANIFEST (fully installable)
   // ----------------------------------------------
   (function setupPWA() {
     async function generateIcon(size, bgColor = '#a4622c', textColor = '#ffffff', label = 'SH') {
@@ -324,7 +348,6 @@
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(label, size/2, size/2);
-      // add tiny decoration
       ctx.font = `${size * 0.12}px system-ui`;
       ctx.fillStyle = '#ffe0b5';
       ctx.fillText('✦', size - 12, size - 10);
@@ -343,11 +366,10 @@
         const icon192Url = URL.createObjectURL(icon192Blob);
         const icon512Url = URL.createObjectURL(icon512Blob);
         
-        // Create dynamic manifest with correct icons
         const manifestObj = {
           name: "Sarah's Homestay Invoice",
           short_name: "SarahsInvoice",
-          description: "Professional invoice management for homestay",
+          description: "Professional invoice management for homestay with stay dates",
           start_url: ".",
           display: "standalone",
           theme_color: "#a4622c",
@@ -360,7 +382,6 @@
         const manifestBlob = new Blob([JSON.stringify(manifestObj)], { type: 'application/json' });
         const manifestUrl = URL.createObjectURL(manifestBlob);
         
-        // Remove existing manifest link if any, add new
         const oldLink = document.querySelector('link[rel="manifest"]');
         if(oldLink) oldLink.remove();
         const manifestLink = document.createElement('link');
@@ -368,7 +389,6 @@
         manifestLink.href = manifestUrl;
         document.head.appendChild(manifestLink);
         
-        // Apple touch icon
         let appleIcon = document.querySelector('link[rel="apple-touch-icon"]');
         if(!appleIcon) {
           appleIcon = document.createElement('link');
@@ -377,7 +397,6 @@
         }
         appleIcon.href = icon192Url;
         
-        // Standard favicon (32x32)
         const faviconCanvas = await generateIcon(64, '#a4622c', '#ffffff', 'SH');
         faviconCanvas.toBlob(blob => {
           const favUrl = URL.createObjectURL(blob);
@@ -464,6 +483,24 @@
     return new Date().toLocaleString('en-GB', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit', second:'2-digit' });
   }
 
+  // Helper ISO dates (YYYY-MM-DD)
+  function getTodayISO() {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
+  function getTomorrowISO() {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const yyyy = tomorrow.getFullYear();
+    const mm = String(tomorrow.getMonth() + 1).padStart(2, '0');
+    const dd = String(tomorrow.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
   // Services data
   let services = [
     { description: "Accommodation", duration: 3, unit: "nights", rate: 150000, amount: 450000 }
@@ -542,29 +579,51 @@
     updatePreview();
   };
 
+  // DOM elements
   const amountPaidInput = document.getElementById('amountPaid');
   const clientNameInput = document.getElementById('clientName');
   const clientContactInput = document.getElementById('clientContact');
   const facilityInput = document.getElementById('facilityLocation');
   const receiptDateInput = document.getElementById('receiptDate');
-  receiptDateInput.value = new Date().toISOString().slice(0,10);
+  const checkInDateInput = document.getElementById('checkInDate');
+  const checkOutDateInput = document.getElementById('checkOutDate');
+  
+  // Set defaults
+  receiptDateInput.value = getTodayISO();
+  checkInDateInput.value = getTodayISO();
+  checkOutDateInput.value = getTomorrowISO();
 
   function escapeHtml(str) {
     if (!str) return '';
     return str.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]));
   }
 
-  // Generate Invoice HTML (pure)
+  // Helper: calculate nights between check-in and check-out
+  function calculateNights(checkInStr, checkOutStr) {
+    if (!checkInStr || !checkOutStr) return 0;
+    const inDate = new Date(checkInStr);
+    const outDate = new Date(checkOutStr);
+    if (isNaN(inDate) || isNaN(outDate)) return 0;
+    const diffTime = outDate - inDate;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays > 0 ? diffDays : 0;
+  }
+
+  // Generate Invoice HTML with Check-in / Check-out and CENTERED totals
   function generateInvoiceHTML() {
     const date = receiptDateInput.value;
     const client = clientNameInput.value.trim() || "KUBIRU ETIZO";
     const contact = clientContactInput.value.trim() || "0781889282";
     const facility = facilityInput.value.trim() || "ABABIRA";
+    const checkIn = checkInDateInput.value || getTodayISO();
+    const checkOut = checkOutDateInput.value || getTomorrowISO();
+    
     const total = services.reduce((s,i) => s + i.amount, 0);
     let amountPaid = parseFloat(amountPaidInput.value);
     if (isNaN(amountPaid)) amountPaid = 0;
     if (amountPaid > total) amountPaid = total;
     const balanceDue = total - amountPaid;
+    
     const itemsHtml = services.map(s => `
       <tr>
         <td style="padding:4px 4px">${escapeHtml(s.description)}</td>
@@ -574,6 +633,7 @@
         <td style="text-align:right">UGX ${s.amount.toLocaleString()}</td>
       </tr>
     `).join('');
+    
     return `
       <div>
         <div class="receipt-brand-header">
@@ -588,13 +648,22 @@
           <div><strong>Contact:</strong> ${escapeHtml(contact)}</div>
           <div><strong>📍 Facility Location:</strong> ${escapeHtml(facility)}</div>
         </div>
+        <!-- STAY PERIOD (CHECK-IN / CHECK-OUT) -->
+        <div class="stay-dates-block">
+          <span>🏡 <strong>Check-in:</strong> ${escapeHtml(checkIn)}</span>
+          <span>➡️</span>
+          <span>🚪 <strong>Check-out:</strong> ${escapeHtml(checkOut)}</span>
+          <span>📅 <strong>Stay Nights:</strong> <em style="background:#fff0da; padding:2px 6px; border-radius:20px;">${calculateNights(checkIn, checkOut)} nights</em></span>
+        </div>
         <table class="receipt-items-table">
           <thead><tr><th>Service</th><th>Duration</th><th>Unit</th><th>Rate (UGX)</th><th style="text-align:right">Amount (UGX)</th></tr></thead>
           <tbody>${itemsHtml || '<tr><td colspan="5">No services</td></tr>'}</tbody>
         </table>
-        <div style="text-align:right; font-weight:800; margin:8px 0; padding:6px; background:#fef3e8; border-radius:10px;">Total Invoice: UGX ${total.toLocaleString()}</div>
-        <div style="text-align:right; margin:4px 0;"><span>💵 Amount Paid: UGX ${amountPaid.toLocaleString()}</span></div>
+        <!-- CENTERED TOTALS SECTION -->
+        <div class="total-display">💰 Total Invoice: UGX ${total.toLocaleString()}</div>
+        <div class="amount-paid-line">💵 Amount Paid: UGX ${amountPaid.toLocaleString()}</div>
         <div class="balance-due-block"><strong>⚖️ Balance due:</strong> UGX ${balanceDue.toLocaleString()}</div>
+        
         <div class="terms-section"><strong>📜 Terms & Conditions</strong><br>• ${TERMS.join('<br>• ')}</div>
         <div class="payment-details"><strong>🏦 Payment Options</strong><br>• Bank Transfer<br>• Account Number: ${BANK_DETAILS.accountNumber}<br>• Account Name: ${BANK_DETAILS.accountName}<br>• Bank: ${BANK_DETAILS.bank}<br>• Country: ${BANK_DETAILS.country}</div>
         <div class="mobile-money-section"><strong>📱 ${AIRTEL_MONEY.title}</strong><br>Merchant code: ${AIRTEL_MONEY.merchantCode}<br>Account Name: ${AIRTEL_MONEY.accountName}<br>Country: ${AIRTEL_MONEY.country}</div>
@@ -602,7 +671,7 @@
         <div class="qr-container">
           <canvas id="invoiceQrCanvas" class="qr-code" width="130" height="130"></canvas>
         </div>
-        <div class="qr-caption">Scan to view invoice details</div>
+        <div class="qr-caption">Scan to view invoice summary</div>
         <div style="margin-top:0.5rem; font-size:0.75rem; text-align:center;"><strong>Authorized by: Management</strong></div>
         <div style="font-size:0.65rem; text-align:center; margin-top:0.6rem;">Thank you for choosing SARAH'S HOMESTAY</div>
         <div class="footer-single">SARAH'S HOMESTAY</div>
@@ -610,7 +679,7 @@
       </div>`;
   }
 
-  // QR code generation from invoice summary
+  // QR code generation from invoice details + stay dates
   async function generateQRCodeInInvoice() {
     const canvas = document.getElementById('invoiceQrCanvas');
     if (!canvas) return;
@@ -627,8 +696,11 @@
     const client = clientNameInput.value.trim() || "KUBIRU ETIZO";
     const contact = clientContactInput.value.trim() || "0781889282";
     const facility = facilityInput.value.trim() || "ABABIRA";
+    const checkIn = checkInDateInput.value || getTodayISO();
+    const checkOut = checkOutDateInput.value || getTomorrowISO();
+    const nights = calculateNights(checkIn, checkOut);
     const balance = Math.max(0, total - amountPaid);
-    const qrText = `INVOICE\n#: ${currentInvoiceNumber}\nDate: ${receiptDateInput.value}\nClient: ${client}\nContact: ${contact}\nFacility: ${facility}\nTotal: UGX ${total.toLocaleString()}\nPaid: UGX ${amountPaid.toLocaleString()}\nBalance: UGX ${balance.toLocaleString()}\nThank you - SARAH'S HOMESTAY`;
+    const qrText = `🏡 SARAH'S HOMESTAY\nINVOICE #: ${currentInvoiceNumber}\nDate: ${receiptDateInput.value}\nClient: ${client}\nContact: ${contact}\nFacility: ${facility}\nCheck-in: ${checkIn}\nCheck-out: ${checkOut} (${nights} nights)\nTotal: UGX ${total.toLocaleString()}\nPaid: UGX ${amountPaid.toLocaleString()}\nBalance: UGX ${balance.toLocaleString()}\nThank you!`;
     try {
       await QRCode.toCanvas(canvas, qrText, { width: 130, margin: 2, color: { dark: '#000000', light: '#ffffff' } });
     } catch(e) {
@@ -647,8 +719,10 @@
     }
   }
 
-  // Event listeners for realtime update
-  [amountPaidInput, clientNameInput, clientContactInput, facilityInput, receiptDateInput].forEach(el => el.addEventListener('input', updatePreview));
+  // Event listeners for realtime updates (including checkin/out)
+  [amountPaidInput, clientNameInput, clientContactInput, facilityInput, receiptDateInput, checkInDateInput, checkOutDateInput].forEach(el => {
+    if (el) el.addEventListener('input', updatePreview);
+  });
 
   async function exportAsPDF() {
     const element = document.getElementById('receiptContainer');
@@ -665,20 +739,30 @@
   document.getElementById('refreshPreviewBtn').onclick = updatePreview;
   document.getElementById('printBtn').onclick = () => { updatePreview(); setTimeout(() => window.print(), 200); };
   document.getElementById('savePdfBtn').onclick = exportAsPDF;
+  
+  // New Invoice: reset all fields to default (including check-in/out dates)
   document.getElementById('newInvoiceBtn').onclick = () => {
     clientNameInput.value = "KUBIRU ETIZO";
     clientContactInput.value = "0781889282";
     facilityInput.value = "ABABIRA";
-    receiptDateInput.value = new Date().toISOString().slice(0,10);
+    receiptDateInput.value = getTodayISO();
     amountPaidInput.value = "100000";
+    checkInDateInput.value = getTodayISO();
+    checkOutDateInput.value = getTomorrowISO();
     services = [{ description: "Accommodation", duration: 3, unit: "nights", rate: 150000, amount: 450000 }];
     renderServicesTable();
     currentInvoiceNumber = refreshInvoiceNumber();
     updatePreview();
   };
-  window.onload = () => { updatePreview(); };
   
-  // Register Service Worker (offline support)
+  window.onload = () => {
+    if (!checkInDateInput.value) checkInDateInput.value = getTodayISO();
+    if (!checkOutDateInput.value) checkOutDateInput.value = getTomorrowISO();
+    if (!receiptDateInput.value) receiptDateInput.value = getTodayISO();
+    updatePreview();
+  };
+  
+  // Service Worker registration (offline support)
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('./sw.js').then(reg => {
